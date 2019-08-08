@@ -1,4 +1,5 @@
 const int BUZZER = 8;
+const int POTENTIOMETER = 1;
 const int DECIBELIMETER = 0;
 const int MEMORY = 250;
 const int DIF_MEMO = 50;
@@ -7,6 +8,7 @@ float volume_array[MEMORY];
 float volume_dif_array[DIF_MEMO];
 float volume_dif_sum = 0;
 float volume_sum = 0;
+float trigger_volume;
 
 int dif_index;
 int index;
@@ -16,6 +18,7 @@ void setup() {
   pinMode(BUZZER, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(DECIBELIMETER, INPUT);
+  pinMode(POTENTIOMETER, INPUT);
 
   for(dif_index=0;dif_index<DIF_MEMO;dif_index++){
     volume_dif_array[dif_index] = 0;
@@ -61,7 +64,9 @@ void send_plotter_data(float volume_dif_mean, float volume_mean){
   Serial.print(",");
   Serial.print(volume_dif_mean);
   Serial.print(",");
-  Serial.println(volume_mean);
+  Serial.print(volume_mean);
+  Serial.print(",");
+  Serial.println(trigger_volume);
 }
 
 void reset_memory() {
@@ -78,13 +83,19 @@ void reset_memory() {
   volume_dif_sum += 0;
 }
 
+void read_trigger_volume() {
+  trigger_volume = analogRead(POTENTIOMETER)/4;
+}
+
 void loop() {
   float volume_mean = get_mean();
   float volume_dif_mean = get_dif_mean(volume_mean);
   
   send_plotter_data(volume_dif_mean, volume_mean);
 
-  if (volume_dif_mean > 50) {
+  read_trigger_volume();
+
+  if (volume_dif_mean > trigger_volume) {
     tone(BUZZER, 1500);
     digitalWrite(LED_BUILTIN, HIGH);
     delay(500);
